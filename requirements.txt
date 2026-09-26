@@ -1,0 +1,15 @@
+# Runtime
+aiosqlite==0.22.1
+fastapi==0.141.1
+httpx==0.28.1
+instructor==1.17.0
+openai==3.3.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+structlog==26.1.0
+tenacity==9.1.4
+uvicorn==0.54.0
+
+# Tests
+pytest==9.1.1
+pytest-asyncio==1.4.0
