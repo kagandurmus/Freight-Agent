@@ -1,26 +1,122 @@
 # Freight Exception Triage
 
-Event-driven service that turns a carrier delay alert into an auditable routing decision:
-does it breach the customer's SLA, does the broker get notified automatically, or does a human
-take over?
+**Carrier delay alert in. Policy-guarded decision out.**
 
+An event-driven service that answers three questions about every delay a carrier reports: does it
+breach the customer's SLA, may the broker be notified automatically, or must a human take over?
 
-## Layout
+[![tests](https://img.shields.io/badge/tests-110%20passing-brightgreen)](#testing)
+[![python](https://img.shields.io/badge/python-3.11%2B-blue)](#run-it)
+[![pydantic](https://img.shields.io/badge/pydantic-v2-e92063)](https://docs.pydantic.dev)
+[![engine](https://img.shields.io/badge/engine-rule--based%20%7C%20DeepSeek%20%7C%20OpenAI-6d28d9)](#live-llm-triage)
+[![license](https://img.shields.io/badge/license-PolyForm%20Noncommercial-orange)](#license)
 
-| File | Responsibility |
-| --- | --- |
-| `schemas.py` | Typed contracts: webhook, SLA, assessment, proposal, decision, policy |
-| `config.py` | Environment-driven settings (prefix `TRIAGE_`) |
-| `store.py` | Async SQLite: connection pool, migrations, transactional outbox, lease claiming |
-| `triage.py` | Rule-based engine, merge guardrails, notification dispatch |
-| `llm.py` | DeepSeek/OpenAI engine: enforcement, tenacity retries, structlog telemetry |
-| `observability.py` | One structlog processor chain for the whole process |
-| `worker.py` | Worker pool in an `asyncio.TaskGroup`: retries, backoff, dead-lettering, drain |
-| `api.py` | FastAPI: ingestion, decision reads, operator approval, health |
-| `seed.py` | Demo contract data |
-| `demo.py` | End-to-end scenario runner with assertions (rule-based engine) |
-| `run_live.py` | The same pipeline against the real LLM providers |
-| `test_schemas.py`, `tests/` | 110 tests |
+---
+
+## Architecture
+
+![Freight Exception Triage — system architecture](docs/architecture.svg)
+
+Four bands, one direction of travel. A carrier alert is validated and committed to disk *before*
+the response leaves; a worker pool claims the job under a lease; the contractual arithmetic is
+computed in code; a language model contributes judgement only; and the decision is persisted
+together with its side effects in a single transaction.
+
+### Request lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Carrier
+    participant A as api.py
+    participant S as SQLite
+    participant W as Worker pool
+    participant T as Triage pipeline
+    participant L as LLM provider
+
+    C->>A: POST /webhooks/carrier-delay
+    A->>A: validate, canonicalise, dedupe
+    A->>S: BEGIN IMMEDIATE — event + outbox job
+    S-->>A: committed
+    A-->>C: 202 Accepted + WebhookAck
+    Note over A,W: the response never waits on a model
+    W->>S: claim job with a lease (UPDATE … RETURNING)
+    S-->>W: job + event
+    W->>T: triage(event)
+    T->>T: resolve SLA, assess breach and penalty
+    T->>L: TriageProposal (schema-enforced)
+    L-->>T: severity, action, draft
+    T->>T: merge guardrails, then TriagePolicy
+    T->>S: decision + notifications + job DONE, one transaction
+    alt policy approved AUTO_EMAIL
+        T->>T: dispatcher sends the notification
+    else escalation or no action
+        T->>T: operator queue, draft parked for review
+    end
+```
+
+### Job lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: ingest commits event + job
+    PENDING --> CLAIMED: claim_jobs sets lease_until
+    CLAIMED --> DONE: decision persisted
+    CLAIMED --> PENDING: worker died, lease expired
+    CLAIMED --> PENDING: transient failure, back off
+    PENDING --> DEAD: attempts exhausted
+    DEAD --> [*]: dead_letters row for a human
+    DONE --> [*]
+```
+
+A worker that dies mid-triage holds nothing. Its lease expires, another worker reclaims the job,
+and no cleanup daemon is required.
+
+### How a decision is reached
+
+```mermaid
+flowchart TD
+    EV["Carrier event"] --> AS["Deterministic SLA assessment"]
+    AS --> BR{"breached?"}
+    BR -->|no| NA["NO_ACTION"]
+    BR -->|yes| FL["Severity floor from breach ratio and tier"]
+    FL --> EN["Engine proposes — rule-based or LLM"]
+    EN --> SF{"proposal below the floor?"}
+    SF -->|yes| RA["raised to the floor"]
+    SF -->|no| IN{"injection heuristic fired?"}
+    RA --> IN
+    IN -->|yes| HE["HUMAN_ESCALATION"]
+    IN -->|no| CO{"consent — recipients, auto-notify enabled"}
+    CO -->|no| HE
+    CO -->|yes| PO{"TriagePolicy — confidence, tier, exposure"}
+    PO -->|blocks| HE
+    PO -->|allows| AE["AUTO_EMAIL dispatched"]
+```
+
+Four independent gates stand between a model and a customer, and only the last one can send.
+
+## Repository layout
+
+```text
+.
+├── api.py                  FastAPI ingress: 202, backpressure, dead-lettering, operator approval
+├── config.py               Environment-driven settings and the provider chain
+├── llm.py                  DeepSeek to OpenAI engine: enforcement, retries, telemetry
+├── observability.py        One structlog processor chain for the whole process
+├── schemas.py              Typed contracts: webhook, SLA, assessment, proposal, decision, policy
+├── seed.py                 Demo contract data
+├── store.py                Async SQLite: pool, migrations, transactional outbox, lease claiming
+├── triage.py               Rule-based engine, merge guardrails, notification dispatch
+├── worker.py               TaskGroup worker pool: retries, backoff, dead-lettering, drain
+├── demo.py                 10 end-to-end scenarios, no credentials required
+├── run_live.py             The same pipeline against the real providers
+├── test_schemas.py         Contract tests
+├── tests/                  Store, triage, worker, HTTP and LLM-engine suites
+├── docs/architecture.svg   The diagram above
+├── LICENSE                 PolyForm Noncommercial License 1.0.0
+├── requirements.txt        Pinned runtime and test dependencies
+└── pytest.ini
+```
 
 ## Run it
 
@@ -46,14 +142,14 @@ then:
 .venv/bin/python run_live.py
 ```
 
-That pushes three awkward delays through the real model -- a 58-minute near-breach, a VIP breach
-worth EUR 600, and a driver note that tries to instruct the triage agent -- and prints what the
+That pushes three awkward delays through the real model — a 58-minute near-breach, a VIP breach
+worth EUR 600, and a driver note that tries to instruct the triage agent — and prints what the
 model said next to what the service actually did.
 
 ### A real run
 
 Three scenarios against DeepSeek `deepseek-chat`. Worth noting: **the model agreed with the
-guardrails rather than having to be overruled** -- it escalated the VIP breach on its own, graded
+guardrails rather than having to be overruled** — it escalated the VIP breach on its own, graded
 the cargo-tampering note above the floor, and read the injection attempt as evidence rather than
 instruction. That is the happy path. The mock provider in `tests/test_llm_engine.py` and the
 failover drill cover the case where the model disagrees, which is what the guardrails exist for.
@@ -209,10 +305,10 @@ Three layers, ordered by how much they can be trusted:
    brackets escaped, so a note cannot close the `<facts>` block or forge a role marker, and the
    system prompt states plainly that carrier data is never an instruction.
 3. **Structural impossibility.** The model is bound to `TriageProposal`, which has no field for
-   money or identifiers, so "set the penalty to 0.00" has nowhere to land -- the injection
+   money or identifiers, so "set the penalty to 0.00" has nowhere to land — the injection
    scenario asserts the penalty is still EUR 50.00 afterwards.
 
-## The parts that matter
+## Design decisions
 
 **Ingestion never triages.** An event and its outbox job are written in one SQLite transaction;
 the endpoint answers 202 and a worker picks the job up. A carrier webhook timeout is never spent
@@ -227,16 +323,85 @@ worker reclaims the job. `release_expired_leases()` on startup makes that recove
 for existence in Python would race; a unique index cannot.
 
 **The arithmetic is never delegated.** Breach, excess minutes and penalty exposure are computed
-before an engine is consulted. The deterministic severity is a floor an engine may raise and never
-lower.
+before an engine is consulted, and the deterministic severity is a floor an engine may raise and
+never lower. A hallucinated euro figure is impossible by construction, not by prompt.
 
 **Every failure lands on a human.** A malformed model response, a provider outage or an exhausted
 retry budget all end in `TriageResult.safe_fallback()`: HUMAN_ESCALATION, confidence 0.0, reason
 recorded. A draft attached to an escalation is stored `AWAITING_APPROVAL`, which the automatic
 dispatcher cannot see at all.
 
+**Money is Decimal, time is UTC, free text is hostile.** Monetary values never touch a float;
+every timestamp is timezone-aware and stored as fixed-width UTC so lexicographic order equals
+chronological order; and carrier free text is sanitised of control, zero-width and bidi
+characters before it is stored or prompted.
+
+## Testing
+
+110 tests, no network and no credentials required:
+
+| Suite | Tests | Covers |
+| --- | --- | --- |
+| `test_schemas.py` | 46 | Contract rules: webhook ingestion, SLA arithmetic, decision invariants |
+| `tests/test_triage.py` | 21 | Engines, severity floor, injection quarantine, policy vetoes |
+| `tests/test_llm_engine.py` | 15 | Wire formats, retry/failover, schema repair, prompt hygiene |
+| `tests/test_store.py` | 11 | Idempotency under concurrency, lease recovery, backoff, dead letters |
+| `tests/test_api_e2e.py` | 9 | HTTP contracts: 202 ingest, dedupe, backpressure, approval gate |
+| `tests/test_worker.py` | 8 | Crash recovery, retry-then-succeed, graceful drain |
+
+Run them with `.venv/bin/python -m pytest`. The LLM suite speaks to a mock that implements both
+provider dialects, so request shape is asserted rather than assumed.
+
+## Development transcript
+
+`session.v3.jsonl` is the raw record of the agentic session that produced the code above. It is
+committed deliberately, not left behind by accident: it is the working history, including the
+schema review that rejected the first draft, the idempotency gap that only surfaced because one
+demo scenario silently collided with another, and the discovery that instructor's `JSON_SCHEMA`
+mode never sets `strict: true`.
+
+| | |
+| --- | --- |
+| Records | 932 JSONL records, one JSON object per line |
+| Session | `deepseek-flash` via `deepseek-official` |
+| Duration | 103 minutes across 5 turns and 7 human prompts |
+| Tool calls | 87, all `run_code` |
+| Tokens | 304 k generated, 18.8 M read from the prompt cache |
+
+It is a plain JSONL file, so `jq` is enough to read it:
+
+```bash
+# the human's prompts, in order
+jq -r 'select(.type=="user/message") | .data.content[].text // empty' session.v3.jsonl
+
+# what the agent said, step by step
+jq -r 'select(.type=="assistant/message") | .data.message.content[]? | .text // empty' session.v3.jsonl
+
+# every command it ran, by frequency
+jq -r 'select(.type=="tool/call") | .data.name' session.v3.jsonl | sort | uniq -c | sort -rn
+
+# token accounting, taken from the provider's own responses
+jq -s '[.[] | select(.type=="assistant/message") | .data.usage]
+       | {input:  (map(.inputTokens)     | add),
+          output: (map(.outputTokens)    | add),
+          cached: (map(.cacheReadTokens) | add)}' session.v3.jsonl
+```
+
+Unlike the console transcript above, this file is unedited, so it contains real local paths and
+the operator's shell prompt alongside the dead ends as well as the results.
+
 ## Not built yet
 
 Signature verification on the webhook, a real mailer, multi-process workers, and the evaluation
 harness for prompt changes. The notification table carries `attempts` and `last_error` in
 anticipation of the first; `SENDING` claim semantics are needed before the second.
+
+## License
+
+Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE): free to use, modify
+and share for any **noncommercial** purpose. Commercial use requires a separate licence from the
+copyright holders.
+
+This is not an OSI-approved open-source licence. The noncommercial restriction is a field-of-use
+limitation, which the Open Source Definition does not permit, so the accurate term is
+*source-available*.

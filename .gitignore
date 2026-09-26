@@ -13,3 +13,6 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# NOTE: session*.jsonl is deliberately NOT ignored. The harness transcript is part of the
+# project's working record and is committed on purpose -- do not add a rule for it here.

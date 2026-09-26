@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 880" width="1180" height="880" role="img" aria-label="Freight Exception Triage system architecture">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#94a3b8"/></marker></defs>
+<rect width="1180" height="880" fill="#ffffff"/>
+<text x="50" y="44" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="750" fill="#0f172a" text-anchor="start" letter-spacing="-0.4">Freight Exception Triage</text>
+<text x="50" y="70" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#64748b" text-anchor="start">Carrier delay alert in, policy-guarded decision out — deterministic SLA arithmetic, with a language model confined to judgement and prose.</text>
+<rect x="50" y="100" width="1080" height="108" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.2"/>
+<text x="70" y="127" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155" text-anchor="start" letter-spacing="0.2">Ingestion</text>
+<text x="150.39999999999998" y="127" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#94a3b8" text-anchor="start">— api.py  ·  synchronous, never waits on a model</text>
+<rect x="80" y="140" width="230" height="52" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="195.0" y="166" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#0f172a" text-anchor="middle">Carrier channels</text>
+<text x="195.0" y="185" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">API · EDI 214 · portal e-mail</text>
+<rect x="380" y="140" width="310" height="52" rx="12" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.4"/>
+<text x="535.0" y="166" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#1e40af" text-anchor="middle">POST /webhooks/carrier-delay</text>
+<text x="535.0" y="185" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">validate · canonicalise · dedupe · dead-letter</text>
+<rect x="760" y="140" width="330" height="52" rx="12" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.4"/>
+<text x="925.0" y="166" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#166534" text-anchor="middle">202 Accepted + WebhookAck</text>
+<text x="925.0" y="185" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">the event is durable before the response leaves</text>
+<line x1="310" y1="166" x2="376" y2="166" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="690" y1="166" x2="756" y2="166" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="50" y="250" width="1080" height="118" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.2"/>
+<text x="70" y="277" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155" text-anchor="start" letter-spacing="0.2">Storage</text>
+<text x="135.2" y="277" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#94a3b8" text-anchor="start">— store.py  ·  SQLite in WAL mode · pool · lease-based claiming</text>
+<text x="72" y="292" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#92400e" text-anchor="start" letter-spacing="0.4">write path</text>
+<rect x="72" y="300" width="170" height="46" rx="9" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.4"/>
+<text x="157.0" y="327.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" font-weight="600" fill="#475569" text-anchor="middle">delay_events</text>
+<rect x="252" y="300" width="170" height="46" rx="9" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.4"/>
+<text x="337.0" y="327.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" font-weight="600" fill="#475569" text-anchor="middle">outbox</text>
+<text x="454" y="292" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#475569" text-anchor="start" letter-spacing="0.4">read model</text>
+<rect x="454" y="300" width="152" height="46" rx="9" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.4"/>
+<text x="530.0" y="327.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" font-weight="600" fill="#475569" text-anchor="middle">decisions</text>
+<rect x="616" y="300" width="152" height="46" rx="9" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.4"/>
+<text x="692.0" y="327.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" font-weight="600" fill="#475569" text-anchor="middle">notifications</text>
+<rect x="778" y="300" width="152" height="46" rx="9" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.4"/>
+<text x="854.0" y="327.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" font-weight="600" fill="#475569" text-anchor="middle">escalations</text>
+<rect x="940" y="300" width="138" height="46" rx="9" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.4"/>
+<text x="1009.0" y="327.0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" font-weight="600" fill="#475569" text-anchor="middle">dead_letters</text>
+<text x="72" y="358" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#64748b" text-anchor="start">Unique indexes are the concurrency control: idempotency_key · decisions.event_id · (decision_id, channel, recipient)</text>
+<line x1="590" y1="208" x2="590" y2="246" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="590" y="232" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">event + job committed together</text>
+<rect x="50" y="410" width="1080" height="220" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.2"/>
+<text x="70" y="437" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155" text-anchor="start" letter-spacing="0.2">Triage pipeline</text>
+<text x="196.0" y="437" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#94a3b8" text-anchor="start">— triage.py / llm.py  ·  worker pool claims the job, one lease at a time</text>
+<rect x="76" y="462" width="250" height="62" rx="12" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.4"/>
+<text x="201.0" y="488" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#166534" text-anchor="middle">Deterministic assessment</text>
+<text x="201.0" y="507" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">breach · excess minutes · exposure</text>
+<line x1="326" y1="493" x2="352" y2="493" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="356" y="462" width="190" height="62" rx="12" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.4"/>
+<text x="451.0" y="488" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#5b21b6" text-anchor="middle">Engine</text>
+<text x="451.0" y="507" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">rule-based or LLM</text>
+<line x1="546" y1="493" x2="572" y2="493" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="576" y="462" width="258" height="62" rx="12" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.4"/>
+<text x="705.0" y="488" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#166534" text-anchor="middle">Merge guardrails</text>
+<text x="705.0" y="507" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">severity floor · injection · consent</text>
+<line x1="834" y1="493" x2="860" y2="493" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="864" y="462" width="240" height="62" rx="12" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.4"/>
+<text x="984.0" y="488" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#166534" text-anchor="middle">TriagePolicy</text>
+<text x="984.0" y="507" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">confidence · tier · exposure ceiling</text>
+<rect x="356" y="550" width="190" height="58" rx="12" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.4"/>
+<text x="451.0" y="576" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#5b21b6" text-anchor="middle">DeepSeek → OpenAI</text>
+<text x="451.0" y="595" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">primary → fallback</text>
+<line x1="451" y1="550" x2="451" y2="528" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="566" y="574" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#64748b" text-anchor="start">Strict schema both ways: tools for DeepSeek,</text>
+<text x="566" y="590" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#64748b" text-anchor="start">server-side json_schema for OpenAI.</text>
+<text x="76" y="620" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#64748b" text-anchor="start">The model never sees a money field — TriageProposal has none.</text>
+<line x1="590" y1="630" x2="590" y2="656" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="590" y="644" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">decision + side effects in one transaction</text>
+<rect x="50" y="660" width="1080" height="130" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.2"/>
+<text x="70" y="687" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155" text-anchor="start" letter-spacing="0.2">Outcomes</text>
+<text x="142.8" y="687" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#94a3b8" text-anchor="start">— persisted decision plus its side-effect rows, atomically</text>
+<rect x="80" y="706" width="330" height="62" rx="12" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.4"/>
+<text x="245.0" y="732" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#166534" text-anchor="middle">AUTO_EMAIL → dispatcher</text>
+<text x="245.0" y="751" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">policy-approved only · notification rows sent</text>
+<rect x="430" y="706" width="350" height="62" rx="12" fill="#fef2f2" stroke="#fecaca" stroke-width="1.4"/>
+<text x="605.0" y="732" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#991b1b" text-anchor="middle">HUMAN_ESCALATION → operator queue</text>
+<text x="605.0" y="751" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">draft parked as AWAITING_APPROVAL</text>
+<rect x="800" y="706" width="290" height="62" rx="12" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.4"/>
+<text x="945.0" y="732" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" fill="#334155" text-anchor="middle">NO_ACTION</text>
+<text x="945.0" y="751" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#64748b" text-anchor="middle">logged and monitored</text>
+<text x="50" y="828" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="500" fill="#475569" text-anchor="start">Automation is never the last word: an operator approval is the only path that moves an AWAITING_APPROVAL draft to SENT.</text>
+</svg>
